@@ -1,0 +1,60 @@
+pipeline {
+    agent {
+        label "K8S"
+    }
+
+    stages {
+
+        stage('Install Helm Repo') {
+            steps {
+                sh '''
+                    helm repo add bitnami https://charts.bitnami.com/bitnami
+                    helm repo add stable https://charts.helm.sh/stable
+                    helm repo update
+                '''
+            }
+        }
+
+        stage('Deploy MongoDB Helm Chart') {
+            steps {
+                sh '''
+                    helm upgrade -i mongodb bitnami/mongodb --set auth.enabled=false
+                    kubectl apply -f mongo-schema.yml
+                '''
+            }
+        }
+
+        stage('Deploy RabbitMQ Helm Chart') {
+            steps {
+                sh '''
+                    helm upgrade -i rabbitmq bitnami/rabbitmq || true 
+                '''
+            }
+        }
+
+        stage('Deploy Redis Helm Chart') {
+            steps {
+                sh '''
+                    helm upgrade -i redis bitnami/redis --set auth.enabled=false
+                '''
+            }
+        }
+
+        stage('Deploy MySQL Helm Chart') {
+            steps {
+                sh '''
+                    helm upgrade -i mysql stable/mysql --set mysqlRootPassword=password --set imageTag=5.7
+                     kubectl apply -f mysql-schema.yml
+                '''
+            }
+        }
+
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
+

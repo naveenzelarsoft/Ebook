@@ -1,0 +1,69 @@
+- name: Install Nginx
+  apt:
+    name: nginx
+    update_cache: yes
+    state: present
+
+- name: Download Frontend from Nexus
+  get_url:
+    url: http://172.31.14.124:8081/repository/frontend/frontend-{{APP_VERSION}}.zip
+    dest: /tmp/frontend.zip
+    username: admin
+    password: admin123
+
+- name: Delete the default content
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/nginx/sites-enabled/default
+    - /etc/nginx/sites-available/default
+    - /var/www/html
+
+- name: Create HtDocs Directory
+  file:
+    path: /var/www/html
+    state: directory
+
+- name: Unzip the Downloaded Content
+  unarchive:
+    src: /tmp/frontend.zip
+    dest: /var/www/html
+    remote_src: yes
+
+- name: Update RoboShop Config file
+  template:
+    src: roboshop.conf
+    dest: /etc/nginx/sites-enabled/roboshop.conf
+  notify: Restart Nginx
+
+- name: Update Nginx Main Config
+  template:
+    src: nginx.conf
+    dest: /etc/nginx/nginx.conf
+
+- name: Start Nginx
+  systemd:
+    state: started
+    name: nginx
+    enabled: yes
+
+- name: Install Node Exporter Prometheus Monitoring
+  include_role:
+    name: common
+    tasks_from: node_exporter
+
+- name: Install Filebeat Monitoring
+  include_role:
+    name: common
+    tasks_from: filebeat
+  vars:
+    IS_STRUCTURED: false
+    LOG_FILES:
+      - { file: "/var/log/nginx/access.log", type: "nginx_access" }
+      - { file: "/var/log/nginx/error.log", type: "nginx_error" }
+
+
+
+
+

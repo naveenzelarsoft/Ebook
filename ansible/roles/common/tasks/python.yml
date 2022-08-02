@@ -1,0 +1,44 @@
+- name: Install Pip
+  apt:
+    name: python3-pip
+    state: present
+    update_cache: yes
+
+- name: Download Artifacts from Nexus
+  include_tasks: download-nexus-artifacts.yml
+
+- name: Install Python Dependencies for Application
+  pip:
+    requirements: /home/roboshop/{{COMPONENT}}/requirements.txt
+    executable: pip3
+
+- name: Update UID in {{COMPONENT}} Config
+  lineinfile:
+    path: /home/roboshop/{{COMPONENT}}/{{COMPONENT}}.ini
+    regexp: '^uid'
+    line: uid = {{roboshop_user_info.uid}}
+
+- name: Update GID in {{COMPONENT}} Config
+  lineinfile:
+    path: /home/roboshop/{{COMPONENT}}/{{COMPONENT}}.ini
+    regexp: '^gid'
+    line: gid = {{roboshop_user_info.group}}
+
+- name: Setup SystemD Service
+  include_tasks: setup-systemd.yml
+
+- name: Install Node Exporter Prometheus Monitoring
+  include_role:
+    name: common
+    tasks_from: node_exporter
+
+- name: Install Filebeat Monitoring
+  include_role:
+    name: common
+    tasks_from: filebeat
+  vars:
+    IS_STRUCTURED: false
+    IS_PYTHON: true
+    LOG_FILES:
+      - { file: "/var/log/{{COMPONENT}}.log", type: "{{COMPONENT}}" }
+

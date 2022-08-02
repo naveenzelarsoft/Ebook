@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: aws-pv
+  labels:
+    storagetype: aws-pv
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteOnce
+  awsElasticBlockStore:
+    volumeID: vol-01092b19559b0723c
+    fsType: xfs
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: aws-pvc
+  labels:
+    type: aws-pvc
+spec:
+  storageClassName: ""
+  volumeName: aws-pv
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-pvc-pv
+spec:
+  containers:
+    - image: centos:7
+      name: test-container
+      command:
+        - sleep
+        - "10000"
+      volumeMounts:
+        - mountPath: /test-pd
+          name: test-volume
+  volumes:
+      - name: test-volume
+        persistentVolumeClaim:
+          claimName: aws-pvc
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: aws-pvc1
+  labels:
+    type: aws-pvc1
+spec:
+  storageClassName: ""
+  volumeName: aws-pv
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-pvc-pv1
+spec:
+  containers:
+    - image: centos:7
+      name: test-container
+      command:
+        - sleep
+        - "10000"
+      volumeMounts:
+        - mountPath: /test-pd
+          name: test-volume
+  volumes:
+      - name: test-volume
+        persistentVolumeClaim:
+          claimName: aws-pvc
+

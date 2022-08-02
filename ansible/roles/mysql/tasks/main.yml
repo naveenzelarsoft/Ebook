@@ -1,0 +1,69 @@
+- name: Check the status of Docker Service
+  shell: systemctl status docker
+  register: out
+  ignore_errors: yes
+
+- name: Install Docker
+  shell: curl -s https://get.docker.com | bash
+  when: out.rc != 0
+
+- name: Start Docker Service
+  systemd:
+    enabled: yes
+    state: started
+    name: docker
+
+- name: Install Pip3
+  apt:
+    name: python3-pip
+    state: present
+    update_cache: yes
+
+- name: Install Pip3 Python Modules
+  pip:
+    name: "{{item}}"
+    executable: pip3
+  loop:
+    - PyMySQL
+    - docker
+
+- name: Create MySQL Data directory
+  file:
+    path: /data
+    state: directory
+
+- name: Create a MySQL container
+  docker_container:
+    name: mysql
+    image: mysql:5.7.33
+    volumes:
+      - "/data:/var/lib/mysql"
+    ports:
+      - "3306:3306"
+    env:
+      MYSQL_ROOT_PASSWORD: "password"
+    restart_policy: always
+
+- name: Download schema
+  unarchive:
+    src: https://github.com/zelar-soft-roboshop/mysql/archive/refs/heads/main.zip
+    dest: /tmp
+    remote_src: yes
+
+- name: Install MySQL Client
+  apt:
+    name: mysql-client-core-8.0
+    state: present
+
+- name: Load Schema to MySQL
+  mysql_db:
+    state: import
+    name: all
+    target: /tmp/mysql-main/shipping.sql
+    login_host: "{{ansible_default_ipv4.address}}"
+    login_user: root
+    login_password: password
+
+
+
+

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-prod
+  annotations:
+    web.site: google.com
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      volumeMounts:
+      - name: index
+        mountPath: /usr/share/nginx/html
+  volumes:
+    - name: index
+      configMap:
+        name: index
+

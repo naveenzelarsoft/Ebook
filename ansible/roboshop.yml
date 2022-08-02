@@ -1,0 +1,44 @@
+- name: Setup roboshop project
+  hosts: all
+  become: yes
+  ## THis become can also be used at task level
+  roles:
+    - role: frontend
+      tags: frontend
+      when: COMPONENT == "frontend"
+
+    - role: mongodb
+      tags: mongodb
+      when: COMPONENT == "mongodb"
+
+    - role: catalogue
+      tags: catalogue
+      when: COMPONENT == "catalogue"
+
+    - role: redis
+      tags: redis
+      when: COMPONENT == "redis"
+
+    - role: user
+      tags: user
+      when: COMPONENT == "user"
+
+    - role: cart
+      tags: cart
+      when: COMPONENT == "cart"
+
+    - role: mysql
+      tags: mysql
+      when: COMPONENT == "mysql"
+
+    - role: shipping
+      tags: shipping
+      when: COMPONENT == "shipping"
+
+    - role: rabbitmq
+      tags: rabbitmq
+      when: COMPONENT == "rabbitmq"
+
+    - role: payment
+      tags: payment
+      when: COMPONENT == "payment"
